@@ -1,8 +1,5 @@
 # Hướng dẫn cài đặt VMware ESXi 7.0 trên VMware Workstation (Nested VM)
 
-> Tài liệu này hướng dẫn cài ESXi 7.0 như một **máy ảo lồng (nested virtualization)** bên trong VMware Workstation Pro/Player, phục vụ mục đích học tập, lab, test trước khi triển khai lên phần cứng thật.
-> Tham khảo, biên soạn lại theo: [congdonglinux.com – Hướng dẫn Cài Đặt Esxi 7.0](https://congdonglinux.com/huong-dan-cai-dat-esxi-7-0-full-license/)
-
 ---
 
 ## 1. Yêu cầu chuẩn bị
