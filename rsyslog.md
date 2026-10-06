@@ -1,4 +1,5 @@
-# BÁO CÁO THỰC HÀNH – TRIỂN KHAI RSYSLOG TẬP TRUNG AUTH.LOG
+# BÁO CÁO THỰC HÀNH – TRIỂN KHAI RSYSLOG TẬP TRUNG AUTH.LOG  
+link truy cập: https://github.com/iamhieuu/cmctelecom/blob/main/rsyslog.md
 
 > **Kiến trúc:**
 > - **Server:** Nhận logs từ nhiều clients
