@@ -55,6 +55,12 @@ java -version
 <img width="504" height="65" alt="image" src="https://github.com/user-attachments/assets/0ef60044-a49f-4a80-b96a-33d351a29566" />
 
 ### Bước 2. Cài đặt Kafka chế độ KRaft 
+#### Vai trò: Tiếp nhận và lưu đệm log trước khi chuyển cho Logstash xử lý.  
+- Topic: Kênh chứa log, ví dụ haproxy-logs.  
+- Partition: Chia Topic thành các phần để hỗ trợ xử lý song song.  
+- Offset: Vị trí của bản ghi trong một Partition, giúp Consumer theo dõi tiến độ đọc.  
+- KRaft: Cơ chế Kafka tự quản lý metadata và đồng thuận, không cần ZooKeeper.  
+Áp dụng: Khi Logstash xử lý chậm, Kafka có thể giữ log để Logstash đọc dần, giúp giảm áp lực lên các thành phần phía sau.
 
 1. Tải và giải nén Kafka:
 ```bash
@@ -130,7 +136,13 @@ ss -tulpn | grep 9092
 
 ---
 
-### Bước 3. Cài đặt Elasticsearch 8.x
+### Bước 3. Cài đặt Elasticsearch 8.x  
+#### Elasticsearch là gì?  
+- Là một Database NoSQL phân tán và công cụ tìm kiếm toàn văn, xây dựng trên thư viện Apache Lucene.  
+#### Các khái niệm cốt lõi:  
+- Document: Một bản ghi log đơn lẻ dưới dạng JSON.  
+- Index: Tập hợp các Document có cấu trúc tương đương nhau. Ở bài này, mỗi ngày tạo 1 index: haproxy-logs-YYYY.MM.dd.  
+Áp dụng: Tìm IP truy cập, mã HTTP 404, 500 hoặc thống kê số lượng request lỗi.  
 ```bash
 wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo gpg --dearmor -o /usr/share/keyrings/elasticsearch-keyring.gpg
 echo "deb [signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-8.x.list
@@ -158,6 +170,15 @@ curl -s http://localhost:9200
 ---
 
 ### Bước 4. Cài đặt Kibana 8.x
+
+#### Kibana là gì?
+- Là giao diện người dùng Web dành riêng cho Elasticsearch. Bản thân Kibana không lưu trữ dữ liệu log, mọi biểu đồ và truy vấn tìm kiếm Kibana đều gửi request REST API sang Elasticsearch để lấy dữ liệu về vẽ.
+#### Thuộc tính server.publicBaseUrl:
+- Khi Kibana nằm sau một Reverse Proxy chạy HTTPS, Kibana cần biết tên miền công khai chính thức của nó để tạo chính xác các đường dẫn redirect và cookie phiên đăng nhập.
+- Data View: Khai báo mẫu Index để Kibana biết cần truy vấn dữ liệu nào, ví dụ haproxy-logs-*.  
+- Discover: Xem và lọc log theo thời gian, IP, mã HTTP.  
+- Dashboard: Hiển thị biểu đồ và số liệu giám sát.  
+- Alerting: Phát hiện điều kiện bất thường và thực hiện hành động cảnh báo.  
 ```bash
 sudo apt install -y kibana
 ```
@@ -181,6 +202,13 @@ Trang đăng nhập
 ---
 
 ### Bước 5. Cài đặt Logstash 8.x
+Vai trò: Nhận log từ Kafka, phân tích dữ liệu và gửi sang Elasticsearch.  
+Pipeline gồm 3 phần:  
+- Input: Nhận dữ liệu từ Kafka Topic haproxy-logs.  
+- Filter: Dùng Grok hoặc các bộ lọc khác để tách log thành các trường như IP, đường dẫn, mã HTTP.  
+- Output: Gửi dữ liệu đã xử lý vào Elasticsearch.  
+Áp dụng: Chuyển log thô thành dữ liệu có cấu trúc để dễ tìm kiếm và thống kê.
+
 ```bash
 sudo apt install -y logstash
 ```
@@ -224,7 +252,7 @@ sudo systemctl enable --now logstash
 
 Chạy trên máy **VM01 (`192.168.136.146`)**.
 
-### Bước 1. Cài đặt các gói cần thiết
+### Bước 1. Cài đặt 
 ```bash
 sudo apt update
 sudo apt install -y haproxy rsyslog openssl filebeat
@@ -335,6 +363,10 @@ sudo systemctl enable haproxy
 ---
 
 ### Bước 5. Cấu hình Filebeat đẩy log sang Kafka
+Vai trò: Theo dõi file log và gửi dữ liệu sang Kafka.  
+- Đọc file /var/log/haproxy.log.  
+- Lưu trạng thái đọc để tiếp tục xử lý khi dịch vụ khởi động lại.  
+- Gửi log đến Kafka qua TCP cổng 9092.  
 file `/etc/filebeat/filebeat.yml`:
 
 ```yaml
